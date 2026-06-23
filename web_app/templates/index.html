@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Disease AI – Leaf Diagnosis & Treatment</title>
+    <meta name="description" content="AI-powered plant disease detection. Upload a leaf image to get instant disease diagnosis, treatment plans, and prevention tips.">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Marked.js for Markdown parsing in chat -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="background-effects">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <header class="header">
+        <h1><i class="fa-solid fa-leaf text-accent"></i> Plant Disease AI</h1>
+        <p class="subtitle">AI-Powered Leaf Diagnosis &amp; Treatment</p>
+    </header>
+
+    <div class="container layout-grid">
+        
+        <!-- Left Column: Upload & Prediction -->
+        <div class="left-col">
+            <div class="card glass">
+                <h2><i class="fa-solid fa-cloud-arrow-up"></i> Upload Leaf Image</h2>
+                
+                <div class="upload-zone" id="drop-zone">
+                    <input type="file" id="fileInput" accept="image/*" class="hidden-input">
+                    <i class="fa-solid fa-image upload-icon"></i>
+                    <p>Drag &amp; Drop an image here or <span class="text-accent cursor-pointer" onclick="document.getElementById('fileInput').click()">Browse</span></p>
+                    <p class="small-text text-muted">Supports JPG, PNG (Max 16MB)</p>
+                </div>
+
+                <div class="action-buttons">
+                    <button id="predictBtn" class="btn btn-primary" onclick="uploadImage()" disabled>
+                        <i class="fa-solid fa-microscope"></i> Analyze Disease
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div id="loadingState" class="hidden loading-container">
+                    <div class="spinner"></div>
+                    <p>Analyzing leaf patterns...</p>
+                </div>
+
+                <!-- Prediction Result -->
+                <div id="resultBox" class="result-box hidden">
+                    <div class="preview-container">
+                        <img id="preview" alt="Leaf Preview">
+                    </div>
+                    
+                    <div class="prediction-info">
+                        <h3>Diagnosis Result</h3>
+                        <div class="disease-tag" id="diseaseName">Healthy</div>
+                        
+                        <div class="confidence-bar-container">
+                            <div class="confidence-label">
+                                <span>Confidence</span>
+                                <span id="confidenceText">0%</span>
+                            </div>
+                            <div class="progress-bg">
+                                <div class="progress-fill" id="confidenceBar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Top 3 Predictions Mini List -->
+                        <div id="top3List" class="top3-list"></div>
+
+                        <!-- Get AI Cards Button -->
+                        <button id="getCardsBtn" class="btn btn-cards" onclick="fetchDiseaseCards()">
+                            <i class="fa-solid fa-layer-group"></i> Get Detailed Disease Cards
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Chatbot -->
+        <div class="right-col">
+            <div class="card glass chat-card">
+                <div class="chat-header">
+                    <h2><i class="fa-solid fa-robot"></i> AI Treatment Assistant</h2>
+                </div>
+                
+                <div id="chatMessages" class="chat-box">
+                    <div class="bot-message bubble">
+                        <p>Hi! Upload a plant leaf image to analyze it. Once diagnosed, you can ask me for treatment advice, causes, or prevention strategies.</p>
+                    </div>
+                </div>
+                
+                <!-- Typing indicator -->
+                <div id="chatLoading" class="hidden bot-message bubble typing-indicator">
+                    <span></span><span></span><span></span>
+                </div>
+
+                <div class="chat-input-area">
+                    <input type="text" id="chatInput" placeholder="Ask about treatments or symptoms..." onkeypress="handleKeyPress(event)">
+                    <button class="btn btn-icon" onclick="sendMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ============================================================
+         DISEASE CARDS SECTION (full-width, appears below main grid)
+    ============================================================ -->
+    <div id="cardsSection" class="cards-section hidden">
+        <div class="cards-section-header">
+            <h2><i class="fa-solid fa-notes-medical text-accent"></i> AI Disease Analysis Cards</h2>
+            <p class="text-muted">Navigate through each possible disease detected in your plant leaf</p>
+        </div>
+
+        <!-- Cards Loading -->
+        <div id="cardsLoading" class="hidden cards-loading">
+            <div class="spinner"></div>
+            <p>Generating detailed disease cards with AI...</p>
+        </div>
+
+        <!-- Card Carousel -->
+        <div id="cardCarousel" class="card-carousel hidden">
+            <!-- Card Counter -->
+            <div class="card-counter">
+                <span id="cardCounterText">Card 1 of 3</span>
+            </div>
+
+            <!-- Card Display -->
+            <div id="diseaseCard" class="disease-card glass">
+
+                <!-- Card Header -->
+                <div class="dc-header">
+                    <div class="dc-title-area">
+                        <div class="dc-rank-badge" id="dcRankBadge">#1</div>
+                        <div>
+                            <h3 id="dcDiseaseName" class="dc-disease-name">Disease Name</h3>
+                            <span id="dcLanguage" class="dc-language-tag"><i class="fa-solid fa-language"></i> English</span>
+                        </div>
+                    </div>
+                    <div class="dc-badges">
+                        <span id="dcSeverityBadge" class="severity-badge">Moderate</span>
+                        <span id="dcRiskBadge" class="risk-badge">Medium</span>
+                    </div>
+                </div>
+
+                <!-- Confidence Bar -->
+                <div class="dc-confidence">
+                    <div class="dc-confidence-label">
+                        <i class="fa-solid fa-chart-bar"></i>
+                        <span>AI Confidence</span>
+                        <span id="dcConfidenceText" class="dc-conf-value">87%</span>
+                    </div>
+                    <div class="dc-progress-bg">
+                        <div class="dc-progress-fill" id="dcConfidenceBar" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="dc-summary">
+                    <i class="fa-solid fa-circle-info text-accent"></i>
+                    <p id="dcSummary">Short summary of the disease.</p>
+                </div>
+
+                <!-- Recommended Action Banner -->
+                <div class="dc-action-banner" id="dcActionBanner">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span id="dcRecommendedAction">Apply treatment immediately.</span>
+                </div>
+
+                <!-- Content Grid -->
+                <div class="dc-content-grid">
+
+                    <!-- Symptoms -->
+                    <div class="dc-section">
+                        <h4><i class="fa-solid fa-stethoscope"></i> Symptoms</h4>
+                        <ul id="dcSymptoms" class="dc-list dc-list-symptoms"></ul>
+                    </div>
+
+                    <!-- Causes -->
+                    <div class="dc-section">
+                        <h4><i class="fa-solid fa-virus"></i> Causes</h4>
+                        <p id="dcCauses" class="dc-causes-text"></p>
+                    </div>
+
+                    <!-- Treatment -->
+                    <div class="dc-section dc-section-full">
+                        <h4><i class="fa-solid fa-syringe"></i> Treatment Steps</h4>
+                        <ol id="dcTreatment" class="dc-list dc-list-treatment"></ol>
+                    </div>
+
+                    <!-- Prevention -->
+                    <div class="dc-section dc-section-full">
+                        <h4><i class="fa-solid fa-shield-halved"></i> Prevention</h4>
+                        <ul id="dcPrevention" class="dc-list dc-list-prevention"></ul>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Navigation Buttons -->
+            <div class="card-nav">
+                <button id="prevCardBtn" class="btn btn-nav" onclick="navigateCard(-1)" disabled>
+                    <i class="fa-solid fa-chevron-left"></i> Previous
+                </button>
+                <div class="card-dots" id="cardDots"></div>
+                <button id="nextCardBtn" class="btn btn-nav" onclick="navigateCard(1)">
+                    Next <i class="fa-solid fa-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Error State -->
+        <div id="cardsError" class="hidden cards-error">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <p id="cardsErrorText">Could not generate disease cards.</p>
+        </div>
+    </div>
+
+<script>
+let currentDisease = "";
+let top3Predictions = [];
+let allCards = [];
+let currentCardIndex = 0;
+
+// ============================================================
+// Drag and Drop
+// ============================================================
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('fileInput');
+const predictBtn = document.getElementById('predictBtn');
+
+dropZone.addEventListener('click', () => fileInput.click());
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('drag-over');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        updateDropZoneText();
+    }
+});
+
+fileInput.addEventListener('change', updateDropZoneText);
+
+function updateDropZoneText() {
+    if (fileInput.files.length > 0) {
+        dropZone.innerHTML = `<i class="fa-solid fa-file-circle-check upload-icon text-accent"></i><p>${fileInput.files[0].name}</p>`;
+        predictBtn.disabled = false;
+    }
+}
+
+// ============================================================
+// Upload & Predict
+// ============================================================
+function uploadImage() {
+    if (fileInput.files.length === 0) return;
+
+    let file = fileInput.files[0];
+    let formData = new FormData();
+    formData.append("file", file);
+
+    document.getElementById("resultBox").classList.add("hidden");
+    document.getElementById("loadingState").classList.remove("hidden");
+    document.getElementById("cardsSection").classList.add("hidden");
+    predictBtn.disabled = true;
+
+    fetch("/predict", { method: "POST", body: formData })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("loadingState").classList.add("hidden");
+        predictBtn.disabled = false;
+
+        if (data.error) { alert(data.error); return; }
+
+        currentDisease = data.disease;
+        top3Predictions = data.top_predictions;
+
+        // Preview
+        document.getElementById("preview").src = data.image_url;
+        document.getElementById("resultBox").classList.remove("hidden");
+
+        // Disease name
+        let formattedDisease = data.disease.replace(/_/g, ' ');
+        document.getElementById("diseaseName").innerText = formattedDisease;
+
+        // Confidence bar
+        let conf = data.confidence;
+        document.getElementById("confidenceText").innerText = conf + "%";
+        let confBar = document.getElementById("confidenceBar");
+        confBar.style.width = conf + "%";
+        if (conf > 85) confBar.style.background = "var(--success-color)";
+        else if (conf > 60) confBar.style.background = "var(--warning-color)";
+        else confBar.style.background = "var(--danger-color)";
+
+        // Top 3 mini list
+        let top3Html = data.top_predictions.map((p, i) => {
+            let icon = i === 0 ? 'fa-trophy' : (i === 1 ? 'fa-medal' : 'fa-award');
+            let name = p.disease.replace(/_/g, ' ');
+            return `<div class="top3-item">
+                        <i class="fa-solid ${icon}"></i>
+                        <span>${name}</span>
+                        <span class="top3-conf">${p.confidence.toFixed(1)}%</span>
+                    </div>`;
+        }).join('');
+        document.getElementById("top3List").innerHTML = top3Html;
+
+        // Chat message
+        addBotMessage(`I've detected **${formattedDisease}** with ${conf}% confidence. Click **Get Detailed Disease Cards** below for a full breakdown, or ask me anything here!`);
+    })
+    .catch(err => {
+        document.getElementById("loadingState").classList.add("hidden");
+        predictBtn.disabled = false;
+        alert("An error occurred during prediction.");
+        console.error(err);
+    });
+}
+
+// ============================================================
+// Fetch Disease Cards
+// ============================================================
+function fetchDiseaseCards() {
+    if (!top3Predictions.length) return;
+
+    const section = document.getElementById("cardsSection");
+    const loading = document.getElementById("cardsLoading");
+    const carousel = document.getElementById("cardCarousel");
+    const error = document.getElementById("cardsError");
+    const btn = document.getElementById("getCardsBtn");
+
+    section.classList.remove("hidden");
+    loading.classList.remove("hidden");
+    carousel.classList.add("hidden");
+    error.classList.add("hidden");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+
+    // Smooth scroll to cards
+    setTimeout(() => section.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+
+    fetch("/get_cards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ top_predictions: top3Predictions })
+    })
+    .then(res => res.json())
+    .then(data => {
+        loading.classList.add("hidden");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-layer-group"></i> Refresh Cards';
+
+        if (data.error || !data.cards) {
+            error.classList.remove("hidden");
+            document.getElementById("cardsErrorText").innerText = data.error || "No cards returned.";
+            return;
+        }
+
+        allCards = data.cards;
+        currentCardIndex = 0;
+        buildDots();
+        renderCard(currentCardIndex);
+        carousel.classList.remove("hidden");
+    })
+    .catch(err => {
+        loading.classList.add("hidden");
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-layer-group"></i> Retry Cards';
+        error.classList.remove("hidden");
+        document.getElementById("cardsErrorText").innerText = "Network error. Please try again.";
+        console.error(err);
+    });
+}
+
+// ============================================================
+// Card Rendering
+// ============================================================
+function renderCard(index) {
+    const card = allCards[index];
+    if (!card) return;
+
+    // Animate out then in
+    const el = document.getElementById("diseaseCard");
+    el.classList.add("card-exit");
+    setTimeout(() => {
+        el.classList.remove("card-exit");
+        el.classList.add("card-enter");
+        _fillCard(card, index);
+        setTimeout(() => el.classList.remove("card-enter"), 400);
+    }, 200);
+
+    updateNavButtons();
+    updateDots(index);
+    document.getElementById("cardCounterText").innerText = `Card ${index + 1} of ${allCards.length}`;
+}
+
+function _fillCard(card, index) {
+    // Rank badge
+    const ranks = ['#1', '#2', '#3'];
+    document.getElementById("dcRankBadge").innerText = ranks[index] || `#${index+1}`;
+
+    // Name & language
+    document.getElementById("dcDiseaseName").innerText = card.disease_name.replace(/_/g, ' ');
+    document.getElementById("dcLanguage").innerHTML = `<i class="fa-solid fa-language"></i> ${card.language || 'English'}`;
+
+    // Severity badge
+    const sevEl = document.getElementById("dcSeverityBadge");
+    sevEl.innerText = card.severity;
+    sevEl.className = "severity-badge sev-" + (card.severity || '').toLowerCase();
+
+    // Risk badge
+    const riskEl = document.getElementById("dcRiskBadge");
+    riskEl.innerText = "Risk: " + card.risk_level;
+    riskEl.className = "risk-badge risk-" + (card.risk_level || '').toLowerCase();
+
+    // Confidence
+    let confVal = parseFloat(card.confidence) || 0;
+    document.getElementById("dcConfidenceText").innerText = card.confidence;
+    const bar = document.getElementById("dcConfidenceBar");
+    bar.style.width = "0%";
+    setTimeout(() => { bar.style.width = Math.min(confVal, 100) + "%"; }, 50);
+    if (confVal > 70) bar.style.background = "var(--success-color)";
+    else if (confVal > 40) bar.style.background = "var(--warning-color)";
+    else bar.style.background = "var(--danger-color)";
+
+    // Summary
+    document.getElementById("dcSummary").innerText = card.short_summary;
+
+    // Recommended action banner
+    const banner = document.getElementById("dcActionBanner");
+    banner.className = "dc-action-banner risk-banner-" + (card.risk_level || 'medium').toLowerCase();
+    document.getElementById("dcRecommendedAction").innerText = card.recommended_action;
+
+    // Symptoms
+    const symUl = document.getElementById("dcSymptoms");
+    symUl.innerHTML = (card.symptoms || []).map(s => `<li>${s}</li>`).join('');
+
+    // Causes
+    document.getElementById("dcCauses").innerText = card.causes;
+
+    // Treatment
+    const treatOl = document.getElementById("dcTreatment");
+    treatOl.innerHTML = (card.treatment || []).map(t => `<li>${t}</li>`).join('');
+
+    // Prevention
+    const prevUl = document.getElementById("dcPrevention");
+    prevUl.innerHTML = (card.prevention || []).map(p => `<li>${p}</li>`).join('');
+}
+
+function navigateCard(dir) {
+    const newIndex = currentCardIndex + dir;
+    if (newIndex < 0 || newIndex >= allCards.length) return;
+    currentCardIndex = newIndex;
+    renderCard(currentCardIndex);
+}
+
+function updateNavButtons() {
+    document.getElementById("prevCardBtn").disabled = (currentCardIndex === 0);
+    document.getElementById("nextCardBtn").disabled = (currentCardIndex === allCards.length - 1);
+}
+
+function buildDots() {
+    const dotsEl = document.getElementById("cardDots");
+    dotsEl.innerHTML = allCards.map((_, i) =>
+        `<span class="dot ${i === 0 ? 'dot-active' : ''}" onclick="navigateCard(${i - currentCardIndex})"></span>`
+    ).join('');
+}
+
+function updateDots(index) {
+    const dots = document.querySelectorAll('.dot');
+    dots.forEach((d, i) => {
+        d.className = "dot" + (i === index ? " dot-active" : "");
+        d.onclick = () => { currentCardIndex = i; renderCard(i); };
+    });
+}
+
+// ============================================================
+// Chat Functionality
+// ============================================================
+function handleKeyPress(e) {
+    if (e.key === "Enter") sendMessage();
+}
+
+function sendMessage() {
+    let inputField = document.getElementById("chatInput");
+    let msg = inputField.value.trim();
+    if (!msg) return;
+
+    addUserMessage(msg);
+    inputField.value = "";
+
+    const chatLoading = document.getElementById("chatLoading");
+    const chatBox = document.getElementById("chatMessages");
+    chatLoading.classList.remove("hidden");
+    chatBox.appendChild(chatLoading);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg, disease: currentDisease })
+    })
+    .then(res => res.json())
+    .then(data => {
+        chatLoading.classList.add("hidden");
+        addBotMessage(data.error ? "Sorry, the chat service is currently unavailable." : data.response);
+    })
+    .catch(() => {
+        chatLoading.classList.add("hidden");
+        addBotMessage("Network error occurred.");
+    });
+}
+
+function addUserMessage(text) {
+    let chat = document.getElementById("chatMessages");
+    let div = document.createElement("div");
+    div.className = "user-message bubble";
+    div.textContent = text;
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+
+function addBotMessage(markdownText) {
+    let chat = document.getElementById("chatMessages");
+    let div = document.createElement("div");
+    div.className = "bot-message bubble";
+    div.innerHTML = marked.parse(markdownText);
+    chat.appendChild(div);
+    chat.scrollTop = chat.scrollHeight;
+}
+</script>
+
+</body>
+</html>

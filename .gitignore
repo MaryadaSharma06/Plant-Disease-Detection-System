@@ -1,0 +1,81 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+venv_tf/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# TensorFlow/Keras
+*.h5
+*.hdf5
+*.pb
+saved_models/
+checkpoints/
+
+# Ignore all checkpoint models
+trained_models/CNN/cnn_epoch_*.keras
+trained_models/VGG16/vgg16_epoch_*.keras
+trained_models/ViT/vit_epoch_*.keras
+
+# Ignore large final models not used in deployment
+trained_models/VGG16/vgg16_final_model.keras
+trained_models/ViT/vit_final_model.keras
+
+# Logs
+*.log
+logs/
+tensorboard_logs/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Uploads
+web_app/static/uploads/*
+!web_app/static/uploads/.gitkeep
+
+# Environment variables
+.env
+.env.local
+
+# API Keys (NEVER commit these!)
+*api_key*
+*.key
+
+# Large files
+*.zip
+*.tar.gz
+*.rar
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+tmp/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+# Dataset (optional - include if small, exclude if large)
+# plantvillage dataset/
