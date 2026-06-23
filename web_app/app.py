@@ -204,11 +204,12 @@ def chat():
 # ---------------------------------------------------
 # MAIN
 # ---------------------------------------------------
-if __name__ == '__main__':
-    load_models()
+load_models()
 
-    if not MODELS:
+if not MODELS:
         print("⚠️ No models loaded!")
+        
+if __name__ == '__main__':
 
     print("\n🚀 Running on http://localhost:5001\n")
 
