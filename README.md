@@ -1,168 +1,247 @@
-# Plant Disease Detection using Deep Learning
+# 🌿 Plant Disease Detection System with AI Assistant
 
-A complete plant disease classification system built with TensorFlow/Keras and Flask.  
-It supports image-based disease prediction using multiple model architectures (CNN, VGG16, ViT) and includes an AI chatbot for treatment/prevention guidance.
+## 📌 Overview
 
-## Features
+Plant Disease Detection System is an AI-powered web application that helps identify plant diseases from leaf images and provides treatment recommendations using an intelligent chatbot assistant.
 
-- Predict plant diseases from uploaded leaf images
-- Multiple deep learning models:
-  - CNN
-  - VGG16 (transfer learning)
-  - Vision Transformer (ViT)
-- Top-3 prediction output with confidence scores
-- Flask web app with image upload and real-time inference
-- AI chatbot support (Groq or Gemini) for disease advice
-- Standalone model testing script (`test_model.py`)
+The system uses Deep Learning for disease classification and Large Language Models (LLMs) to generate disease insights, prevention tips, and treatment suggestions.
 
-## Dataset
+---
 
-This project uses the **PlantVillage** dataset organized by class folders.
+## 🚀 Features
 
-Expected directory structure:
+- Plant disease detection from leaf images
+- AI-powered treatment assistant
+- Interactive disease analysis cards
+- Severity and risk assessment
+- Symptoms and causes identification
+- Treatment recommendations
+- Prevention strategies
+- Top disease predictions with confidence scores
+- Modern responsive UI
 
-```text
-plantvillage dataset/
-  color/
-  grayscale/
-  segmented/
-```
+---
 
-The training pipeline and current web app inference are configured for the `color` subset.
+## 🛠️ Tech Stack
 
-## Project Structure
+### Frontend
 
-```text
-Plant Disease Detection/
-  config.py
-  requirements.txt
-  test_model.py
-  web_app/
-    app.py
-    chatbot.py
-    templates/
-    static/
-  trained_models/
-    CNN/
-    VGG16/
-    ViT/
-  plantvillage dataset/
-```
+* HTML
+* CSS
+* JavaScript
 
-## Tech Stack
+### Backend
 
-- Python
-- TensorFlow / Keras
-- Flask
-- NumPy, Pillow
-- scikit-learn, matplotlib
-- Groq API / Google Gemini API (optional chatbot)
+* Flask
+* Python
 
-## Installation
+### Machine Learning
 
-1. Clone the repository:
+* TensorFlow
+* Keras
+* NumPy
+* Pillow (PIL)
+
+### AI Assistant
+
+* Groq API
+* Gemini API (Optional)
+
+### Version Control
+
+* Git
+* GitHub
+
+---
+
+## 🧠 Models Evaluated
+
+| Model                    | Accuracy |
+| ------------------------ | -------- |
+| CNN                      | ~97%     |
+| VGG16                    | ~99%     |
+| Vision Transformer (ViT) | ~89%     |
+
+For deployment, the CNN model was selected due to its excellent balance between accuracy, model size, and inference speed.
+
+---
+
+## 📂 Project Structure
 
 ```bash
-git clone <your-repo-url>
-cd "Plant Disease Detection"
+Plant-Disease-Detection-System/
+│
+├── web_app/
+│   ├── app.py
+│   ├── chatbot.py
+│   ├── templates/
+│   └── static/
+│
+├── trained_models/
+│   ├── CNN/
+│   ├── VGG16/
+│   └── ViT/
+│
+├── requirements.txt
+├── README.md
+└── config.py
 ```
 
-2. Create and activate a virtual environment:
+---
+
+## ⚙️ Installation
+
+### Clone Repository
 
 ```bash
-python -m venv .venv
+git clone https://github.com/MaryadaSharma06/Plant-Disease-Detection-System.git
+cd Plant-Disease-Detection-System
 ```
 
-Windows PowerShell:
+### Create Virtual Environment
 
-```powershell
-.\.venv\Scripts\Activate.ps1
+```bash
+python -m venv venv
 ```
 
-3. Install dependencies:
+### Activate Environment
+
+#### Windows
+
+```bash
+venv\Scripts\activate
+```
+
+#### Linux / Mac
+
+```bash
+source venv/bin/activate
+```
+
+### Install Dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Run the Web App
+---
 
-From project root:
+## 🔑 Environment Variables
 
-```bash
-python web_app/app.py
+Create a `.env` file in the project root:
+
+```env
+GROQ_API_KEY=your_groq_api_key
 ```
 
-Open your browser at:
+(Optional)
 
-- `http://localhost:5000`
-
-## Test a Trained Model from Terminal
-
-```bash
-python test_model.py
+```env
+GEMINI_API_KEY=your_gemini_api_key
 ```
 
-You will be prompted to enter a test image path, for example:
+---
+
+## ▶️ Run Application
+
+```bash
+cd web_app
+python app.py
+```
+
+Open:
 
 ```text
-plantvillage dataset/color/Tomato___Late_blight/<image_name>.JPG
+http://localhost:5001
 ```
 
-## Training Models
+---
 
-Training scripts are available in:
+## 📊 Dataset
 
-- `trained_models/CNN/train_cnn.py`
-- `trained_models/VGG16/train_vgg16.py`
-- `trained_models/ViT/train_vit.py`
+The project was trained using the PlantVillage dataset containing healthy and diseased leaf images from multiple plant species.
 
-Run them from project root:
+---
 
-```bash
-python trained_models/CNN/train_cnn.py
-python trained_models/VGG16/train_vgg16.py
-python trained_models/ViT/train_vit.py
-```
+## 🔍 Workflow
 
-## API Endpoints
+1. User uploads a plant leaf image.
+2. Image is preprocessed and resized.
+3. CNN model predicts the disease class.
+4. Confidence scores are generated.
+5. AI assistant provides:
 
-- `GET /` - Main web interface
-- `POST /predict` - Upload an image and get predictions
-- `POST /chat` - Ask disease/treatment questions
-- `POST /set-api-key` - Set chatbot API key and provider
+   * Disease description
+   * Symptoms
+   * Prevention methods
+   * Treatment recommendations
 
-## Configuration
+---
+## ✨ Advanced AI Disease Analysis Cards
 
-Main configuration is in `config.py`:
+After prediction, the system generates detailed AI-powered disease cards that provide:
 
-- Training hyperparameters
-- Data augmentation settings
-- Web app settings
-- Model/data paths
-- Chatbot provider settings
+- Disease overview
+- Severity level assessment
+- Risk level indication
+- AI confidence score
+- Symptoms
+- Causes
+- Treatment steps
+- Prevention strategies
+- Actionable recommendations
 
-## Security Note (Important)
+These cards help users understand not only the detected disease but also the appropriate actions required for treatment and prevention.
 
-If API keys are present in `config.py`, **remove and rotate them before publishing the repository**.
+## 📸 Screenshots
 
-Recommended approach:
+### Home Page
 
-- Store keys in environment variables (for example `GROQ_API_KEY`, `GEMINI_API_KEY`)
-- Keep secrets out of source control
+<img width="848" height="410" alt="image" src="https://github.com/user-attachments/assets/282584da-7a76-41dd-9bb8-0bed1d3ed951" />
 
-## Known Notes
 
-- The web app currently loads the CNN model by default in `web_app/app.py`.
-- Large datasets and model checkpoint files may be too big for regular Git commits.
+### Disease Prediction
 
-## Future Improvements
+<img width="845" height="407" alt="image" src="https://github.com/user-attachments/assets/241e7ebc-7ef5-4987-a7c9-431ab180a0a0" />
 
-- Add Docker support
-- Add model evaluation metrics dashboard
-- Add user authentication and prediction history
-- Export reports for disease diagnosis sessions
 
-## License
+### AI Disease Analysis Card
+<img width="840" height="405" alt="image" src="https://github.com/user-attachments/assets/f10ff6bd-16ab-4a11-9f11-bbe917c4947d" />
 
-Use an open-source license of your choice (MIT is a common option) and add a `LICENSE` file if you plan to make this public.
+<img width="835" height="409" alt="image" src="https://github.com/user-attachments/assets/1b4b82d1-3f1f-471d-8341-4d83116f24cb" />
+
+
+### AI Disease Analysis Card
+
+<img width="844" height="407" alt="image" src="https://github.com/user-attachments/assets/da18186d-b027-46bb-8a6e-50467621b482" />
+
+
+
+
+---
+
+## 🔮 Future Enhancements
+
+* User authentication and profile management
+* Prediction history tracking
+* PDF report generation
+* Mobile application support
+* Multi-language chatbot support
+* Cloud deployment and scalability improvements
+
+---
+
+## 👩‍💻 Author
+
+**Maryada Sharma**
+
+B.Tech Computer Science Engineering
+BML Munjal University
+
+GitHub: https://github.com/MaryadaSharma06
+
+---
+
+## 📜 License
+
+This project is developed for educational and research purposes.
