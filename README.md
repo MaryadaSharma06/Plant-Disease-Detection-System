@@ -10,14 +10,15 @@ The system uses Deep Learning for disease classification and Large Language Mode
 
 ## 🚀 Features
 
-* Upload plant leaf images for disease detection
-* Deep Learning-based disease classification
-* Supports 38 plant disease classes
-* Displays prediction confidence scores
-* AI-powered chatbot for disease-related queries
-* Prevention and treatment recommendations
-* Interactive and user-friendly web interface
-* Real-time image analysis
+- Plant disease detection from leaf images
+- AI-powered treatment assistant
+- Interactive disease analysis cards
+- Severity and risk assessment
+- Symptoms and causes identification
+- Treatment recommendations
+- Prevention strategies
+- Top disease predictions with confidence scores
+- Modern responsive UI
 
 ---
 
@@ -176,6 +177,21 @@ The project was trained using the PlantVillage dataset containing healthy and di
    * Treatment recommendations
 
 ---
+## ✨ Advanced AI Disease Analysis Cards
+
+After prediction, the system generates detailed AI-powered disease cards that provide:
+
+- Disease overview
+- Severity level assessment
+- Risk level indication
+- AI confidence score
+- Symptoms
+- Causes
+- Treatment steps
+- Prevention strategies
+- Actionable recommendations
+
+These cards help users understand not only the detected disease but also the appropriate actions required for treatment and prevention.
 
 ## 📸 Screenshots
 
