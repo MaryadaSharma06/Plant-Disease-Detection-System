@@ -98,41 +98,67 @@ def load_models():
 # IMAGE PREPROCESS
 # ---------------------------------------------------
 def preprocess_image(image_path):
-    img = Image.open(image_path).convert('RGB')
+    print("Opening image...", flush=True)
+
+    img = Image.open(image_path).convert("RGB")
+
+    print("Resizing...", flush=True)
+
     img = img.resize((IMG_SIZE, IMG_SIZE))
-    img = np.array(img) / 255.0
-    return np.expand_dims(img, axis=0)
+
+    img = np.array(img, dtype=np.float32) / 255.0
+
+    img = np.expand_dims(img, axis=0)
+
+    print("Preprocessing complete", flush=True)
+
+    return img
 
 
 # ---------------------------------------------------
 # PREDICTION
 # ---------------------------------------------------
 def predict_disease(image_path, model_name='CNN'):
-    if model_name not in MODELS:
+    try:
+        print("Loading image...", flush=True)
+
+        if model_name not in MODELS:
+            raise Exception(f"Model '{model_name}' not loaded")
+
+        img = preprocess_image(image_path)
+        print(f"Image shape: {img.shape}", flush=True)
+
+        print("Running inference...", flush=True)
+
+        predictions = MODELS[model_name](img, training=False).numpy()
+
+        print("Inference completed", flush=True)
+
+        if predictions is None or len(predictions) == 0:
+            raise Exception("Model returned empty predictions")
+
+        idx = int(np.argmax(predictions[0]))
+        confidence = float(predictions[0][idx])
+
+        disease = CLASS_NAMES[idx]
+
+        top_3_idx = np.argsort(predictions[0])[-3:][::-1]
+
+        top_3 = []
+
+        for i in top_3_idx:
+            top_3.append({
+                "disease": CLASS_NAMES[int(i)],
+                "confidence": round(float(predictions[0][i]) * 100, 2)
+            })
+
+        return disease, confidence * 100, top_3
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        print("Prediction Error:", str(e), flush=True)
         return None, None, None
-
-    img = preprocess_image(image_path)
-    print("Before predict")
-    predictions = MODELS[model_name](img, training=False).numpy()
-    print("After predict")
-
-    idx = np.argmax(predictions[0])
-    confidence = float(predictions[0][idx])
-
-    disease = CLASS_NAMES[idx]
-
-    top_3_idx = np.argsort(predictions[0])[-3:][::-1]
-    top_3 = [
-        {
-            'disease': CLASS_NAMES[i],
-            'confidence': float(predictions[0][i]) * 100
-        }
-        for i in top_3_idx
-    ]
-
-    return disease, confidence * 100, top_3
-
-
 # ---------------------------------------------------
 # ROUTES
 # ---------------------------------------------------
@@ -148,44 +174,66 @@ def index():
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        print("Request received")
+        print("=" * 60, flush=True)
+        print("Prediction request received", flush=True)
 
         if 'file' not in request.files:
-            return jsonify({'error': 'No file uploaded'}), 400
+            return jsonify({
+                "success": False,
+                "error": "No file uploaded"
+            }), 400
 
         file = request.files['file']
 
-        if file.filename == '':
-            return jsonify({'error': 'No file selected'}), 400
+        if file.filename == "":
+            return jsonify({
+                "success": False,
+                "error": "No file selected"
+            }), 400
 
-        model_name = request.form.get('model', CURRENT_MODEL)
+        model_name = request.form.get("model", CURRENT_MODEL)
 
-        filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'uploaded.jpg')
+        filepath = os.path.join(
+            app.config["UPLOAD_FOLDER"],
+            "uploaded.jpg"
+        )
+
+        print("Saving image...", flush=True)
         file.save(filepath)
 
-        print("Image saved")
+        print("Image saved", flush=True)
 
-        disease, confidence, top_3 = predict_disease(filepath, model_name)
-
-        print("Prediction completed")
+        disease, confidence, top_3 = predict_disease(
+            filepath,
+            model_name
+        )
 
         if disease is None:
-            return jsonify({'error': 'Prediction failed'}), 500
+            print("Prediction failed", flush=True)
+
+            return jsonify({
+                "success": False,
+                "error": "Prediction failed"
+            }), 500
+
+        print("Returning prediction", flush=True)
 
         return jsonify({
-            'disease': disease,
-            'confidence': round(confidence, 2),
-            'top_predictions': top_3,
-            'image_url': '/static/uploads/uploaded.jpg'
+            "success": True,
+            "disease": disease,
+            "confidence": round(confidence, 2),
+            "top_predictions": top_3,
+            "image_url": "/static/uploads/uploaded.jpg"
         })
 
     except Exception as e:
         import traceback
         traceback.print_exc()
-        return jsonify({
-            'error': str(e)
-        }), 500
 
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 @app.route('/get_cards', methods=['POST'])
 def get_cards():
     if not chatbot:
