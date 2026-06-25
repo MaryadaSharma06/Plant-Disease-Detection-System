@@ -112,7 +112,9 @@ def predict_disease(image_path, model_name='CNN'):
         return None, None, None
 
     img = preprocess_image(image_path)
-    predictions = MODELS[model_name].predict(img, verbose=0)
+    print("Before predict")
+    predictions = MODELS[model_name](img, training=False).numpy()
+    print("After predict")
 
     idx = np.argmax(predictions[0])
     confidence = float(predictions[0][idx])
@@ -145,30 +147,44 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file uploaded'}), 400
+    try:
+        print("Request received")
 
-    file = request.files['file']
-    model_name = request.form.get('model', CURRENT_MODEL)
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file uploaded'}), 400
 
-    if file.filename == '':
-        return jsonify({'error': 'No file selected'}), 400
+        file = request.files['file']
 
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'uploaded.jpg')
-    file.save(filepath)
+        if file.filename == '':
+            return jsonify({'error': 'No file selected'}), 400
 
-    disease, confidence, top_3 = predict_disease(filepath, model_name)
+        model_name = request.form.get('model', CURRENT_MODEL)
 
-    if disease is None:
-        return jsonify({'error': 'Prediction failed'}), 500
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], 'uploaded.jpg')
+        file.save(filepath)
 
-    return jsonify({
-        'disease': disease,
-        'confidence': round(confidence, 2),
-        'top_predictions': top_3,
-        'image_url': f'/static/uploads/uploaded.jpg'
-    })
+        print("Image saved")
 
+        disease, confidence, top_3 = predict_disease(filepath, model_name)
+
+        print("Prediction completed")
+
+        if disease is None:
+            return jsonify({'error': 'Prediction failed'}), 500
+
+        return jsonify({
+            'disease': disease,
+            'confidence': round(confidence, 2),
+            'top_predictions': top_3,
+            'image_url': '/static/uploads/uploaded.jpg'
+        })
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'error': str(e)
+        }), 500
 
 @app.route('/get_cards', methods=['POST'])
 def get_cards():
